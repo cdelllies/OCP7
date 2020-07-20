@@ -1,0 +1,40 @@
+*{
+    font-family: 'Rubik', sans-serif;
+}
+.restaurantCard{
+    background-color: white;
+    padding: 0.5rem;
+    margin: 5px;
+    width: calc(100% - 10px);
+    height: auto;
+    border-radius: 3px;
+}
+.commentCard{
+    width: 100%;
+    background-color: rgb(196, 196, 196);
+    padding: 0.5rem;
+    margin-top: 5px;
+    border-radius: 3px;
+}
+.restaurantCard span, .restaurantCard p, .restaurantCard h5{
+    margin: 0;
+}
+.restaurantCard h5{
+    text-transform: capitalize;
+}
+.restaurantCard article{
+    margin-left: 0;
+}
+.restaurantCard img{
+    width: 100%;
+    margin: 5px 0 5px 0;
+}
+#cardContainer{
+    padding: 0;
+    height: calc(100vh - 4rem);
+    overflow-y: scroll;
+}
+.filter{
+    height: 3rem;
+    padding: 5px
+}
