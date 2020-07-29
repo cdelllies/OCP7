@@ -54,84 +54,6 @@ let user,
     restaurants = []
 const $ = document
 
-class Restaurant {
-    constructor(el, id) {
-        this.id = id
-        this.details = el
-        this.restaurantName = el.restaurantName
-        this.lat = el.lat
-        this.lng = el.long
-        this.ratings = el.ratings
-        this.descRendered = false
-        this.desc = this.displayShortCard()
-        this.marker = new google.maps.Marker({ position: { lat: this.lat, lng: this.lng }, animation: google.maps.Animation.DROP, map: map, title: this.restaurantName, icon: "http://maps.google.com/mapfiles/ms/icons/yellow-dot.png" });
-    }
-    displayShortCard() {
-        this.desc = $.createElement('p')
-        let titleBar = $.createElement("span"),
-            div = $.createElement("div"),
-            title = $.createElement("h5"),
-            average = $.createElement('div'),
-            rate = 0
-
-        title.innerText = this.restaurantName
-
-        titleBar.classList.add("d-flex", "justify-content-between")
-        titleBar.append(title)
-
-        this.desc.append(document.createElement('h5').innerHTML = "Avis")
-
-        if (this.ratings.length > 0) {
-            this.ratings.forEach(rating => {
-                let rateCard = $.createElement('article')
-                rateCard.classList.add('row', 'commentCard')
-
-                let comment = $.createElement('p')
-                comment.innerText = rating.comment
-                comment.classList.add('col-10')
-                rateCard.append(comment)
-
-                let stars = $.createElement('span')
-                stars.innerHTML = rating.stars + '&nbsp' + starSvg
-                stars.classList.add('col-2', 'text-right')
-                rateCard.append(stars)
-
-                rate += rating.stars
-                this.desc.append(rateCard)
-            });
-            rate = rate / ratings.length
-        } else {
-            rate = '?'
-        }
-
-        average.innerHTML = rate + '&nbsp' + starSvg
-        titleBar.append(average)
-
-        div.classList.add('container-fluid', 'restaurantCard')
-        div.append(titleBar)
-        div.addEventListener('click', eventHandler)
-        div.dataset.id = this.id
-        document.querySelector("#cardContainer").append(div)
-        return this.desc
-    }
-    toggleDesc(el) {
-        if (!this.descRendered) {
-            let img = $.createElement('img')
-
-            //img.src = '../api/streetview.jpg'
-            img.src = `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${this.lat},${this.lng}&heading=151.78&pitch=-0.76&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`
-
-            this.desc.insertBefore(img, this.desc.childNodes[0])
-            this.descRendered = true
-            el.append(this.desc)
-        } else if (el.childNodes.length > 1) {
-            el.removeChild(el.childNodes[1])
-        } else {
-            el.append(this.desc)
-        }
-    }
-}
-
 function initMap() {
     navigator.geolocation.getCurrentPosition(centerMap, noLocation)
 }
@@ -140,7 +62,38 @@ function centerMap(location) {
     user = { lat: location.coords.latitude, lng: location.coords.longitude };
     map = new google.maps.Map(
         document.getElementById('map'), { zoom: 15, center: user, styles: mapStyle });
-    var userMarker = new google.maps.Marker({ position: user, animation: google.maps.Animation.DROP, map: map, title: "Vous êtes là", icon: "http://maps.google.com/mapfiles/ms/icons/blue-dot.png" });
+    var userMarker = new google.maps.Marker({ position: user, animation: google.maps.Animation.DROP, map: map, title: "Vous êtes là", icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" });
+    
+    map.addListener('click', function (mapsMouseEvent) {
+        let latlng = mapsMouseEvent.latLng.toString()
+        latlng = latlng.replace('(', '')
+        latlng = latlng.replace(')', '')
+        latlng = latlng.split(', ')
+        console.log(latlng)
+        console.log($.querySelector('#editor').checked)
+            if ($.querySelector('#editor').checked) {
+                let name = prompt("Quel est le nom du restaurant")
+                //fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=47.46634361862981,-0.549963790178305&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`)
+                fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latlng[0]},${latlng[1]}&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`)
+                    .then((res) => {
+                        return res.json()
+                    })
+                    .then((data)=>{
+                        let obj = new Object
+                        obj.restaurantName = name
+                        id = restaurantCollection.length
+                        obj.address = data.results[0].formatted_address
+                        obj.lat = parseFloat(latlng[0])
+                        obj.long = parseFloat(latlng[1])
+                        obj.ratings = new Array
+                        restaurantCollection.push(new Restaurant(obj, id))
+                        let near = nearSort(restaurantCollection, 1)
+                        console.log(near)
+                        $.querySelectorAll('.restaurantCard').forEach(el => el.remove())
+                        near.forEach(el=>el.displayShortCard())
+                    })
+            }
+    });
     fetchNear()
 }
 
@@ -157,21 +110,7 @@ function fetchNear() {
         .then(res => res.json())
         .then(json => {
             console.log(json)
-            let near = []
-            json.forEach(el => {
-                let diff = distance(user.lat, user.lng, el.lat, el.long, "K")
-                if (diff < 10) {
-                    el.diff = diff
-                    near.push(el)
-                }
-            })
-            near.sort(function (a, b) {
-                let keyA = a.diff,
-                    keyB = b.diff;
-                if (keyA < keyB) return -1;
-                if (keyA > keyB) return 1;
-                return 0;
-            })
+            let near = nearSort(json)
             return near
         }).then(places => {
             console.log(places)
@@ -182,77 +121,28 @@ function fetchNear() {
         })
 }
 
-function eventHandler(e = null, el = null) {
-    let element = _.isNull(e) ? el : e.toElement
-
-    if (element.tagName !== "DIV") {
-        eventHandler(null, element.parentNode)
+function eventHandler(e) {
+    let element = e.toElement
+    while (element.tagName != "DIV") {
+        element = element.parentNode
+    }
+    if (e.toElement.tagName === 'BUTTON') {
+        let id = element.dataset.id
+        restaurantCollection[id].addRate()
     } else {
         restaurantCollection[element.dataset.id].toggleDesc(element)
     }
 }
 
+function sliderChange(value) {
+    $.querySelector('#value').innerText = `Note minimum : ${value}`
+    $.querySelectorAll('.restaurantCard').forEach(el => el.remove())
+    restaurantCollection.forEach(el => el.filterStars(value, 5))
+}
+
 function difference(a, b) {
     return Math.abs(a - b);
 }
-
-
-
-// function createCard(el) {
-//     let div = $.createElement("div"),
-//         titleBar = $.createElement("span"),
-//         title = $.createElement("h5"),
-//         average = $.createElement('div'),
-//         desc = $.createElement('p'),
-//         img = $.createElement('img'),
-//         rate = 0
-
-//     title.innerText = el.restaurantName
-
-//     titleBar.classList.add("d-flex", "justify-content-between")
-//     titleBar.append(title)
-
-//     img.src = '../api/streetview.jpg'
-//     //img.src = `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${el.lat},${el.long}&heading=151.78&pitch=-0.76&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`
-
-//     desc.append(img)
-
-//     desc.append(document.createElement('h5').innerHTML = "Avis")
-//     if (el.ratings.length > 0) {
-//         el.ratings.forEach(rating => {
-//             let rateCard = $.createElement('article')
-//             rateCard.classList.add('row', 'commentCard')
-
-//             let comment = $.createElement('p')
-//             comment.innerText = rating.comment
-//             comment.classList.add('col-10')
-//             rateCard.append(comment)
-
-//             let stars = $.createElement('span')
-//             stars.innerHTML = rating.stars + '&nbsp' + starSvg
-//             stars.classList.add('col-2', 'text-right')
-//             rateCard.append(stars)
-
-//             rate += rating.stars
-//             desc.append(rateCard)
-//         });
-//         rate = rate / ratings.length
-//     } else {
-//         rate = '?'
-//     }
-
-//     average.innerHTML = rate + '&nbsp' + starSvg
-//     titleBar.append(average)
-//     desc.style.display = 'none'
-
-//     div.classList.add('container-fluid', 'restaurantCard')
-//     div.append(titleBar)
-//     div.append(desc)
-//     div.addEventListener('click', eventHandler)
-//     document.querySelector("#cardContainer").append(div)
-// }
-
-
 
 function distance(lat1, lon1, lat2, lon2, unit) {
     if ((lat1 == lat2) && (lon1 == lon2)) {
@@ -276,17 +166,40 @@ function distance(lat1, lon1, lat2, lon2, unit) {
     }
 }
 
+function nearSort(data, type = 0){
+    let array = []
+    data.forEach(el => {
+        let diff = distance(user.lat, user.lng, el.lat, type ? el.lng : el.long, "K")
+        if (diff < 10) {
+            el.diff = diff
+            array.push(el)
+        }
+    })
+    array.sort(function (a, b) {
+        let keyA = a.diff,
+            keyB = b.diff;
+        if (keyA < keyB) return -1;
+        if (keyA > keyB) return 1;
+        return 0;
+    })
+    return array
+}
+
 //close overlay
 
-function eventFire(el, etype) {
-    if (el.fireEvent) {
-        el.fireEvent('on' + etype);
-    } else {
-        var evObj = document.createEvent('Events');
-        evObj.initEvent(etype, true, false);
-        el.dispatchEvent(evObj);
-    }
-}
-setTimeout(() => {
-    eventFire(document.querySelector('.dismissButton'), 'click')
-}, 4000)
+// function eventFire(el, etype) {
+//     if (el.fireEvent) {
+//         el.fireEvent('on' + etype);
+//     } else {
+//         var evObj = document.createEvent('Events');
+//         evObj.initEvent(etype, true, false);
+//         el.dispatchEvent(evObj);
+//     }
+// }
+// setTimeout(() => {
+//     eventFire(document.querySelector('.dismissButton'), 'click')
+// }, 4000)
+
+// function testEvent(e) {
+//     console.log(e)
+// }

@@ -23,19 +23,18 @@
                 </svg>
                 &nbsp; HexaFood
             </a>
+            <span>
+                <label for="editor">Mode éditeur</label>
+                <input type="checkbox" name="editor" id="editor">
+            </span>
         </div>
     </nav>
     <div class="container-fluid" style="height: calc(100% - 4.25rem);">
         <div class=" row" style="height: 100%;">
             <div class="col-sm-4 bg-primary" id="cardContainer">
                 <div class="container-fluid bg-warning filter">
-                    <div class="input-group mb-3">
-                        <label class="input-group-text" for="inputGroupSelect01">Options</label>
-                        <select class="form-select" id="inputGroupSelect01">
-                            <option value="near" selected>Le plus proche</option>
-                            <option value="bestRate">Le mieux noté</option>
-                        </select>
-                    </div>
+                    <span id="value">Note minimale : 1</span>
+                    <input id="range" type="range" min="1" max="5" value="1" onchange="sliderChange(this.value)" />
                 </div>
             </div>
             <div class="col-sm-8" id="map">
@@ -44,12 +43,10 @@
         </div>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.19/lodash.min.js"></script>
+    <script src="js/Restaurant.js"></script>
     <script src="js/script.js"></script>
-    <!-- <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI&callback=initMap">
-        </script> -->
     <script async defer
-        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC7mwraUKJY0KEnl-mDUBQlhmrJLcA8jII&callback=initMap">
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI&libraries=places&callback=initMap">
         </script>
 </body>
 
