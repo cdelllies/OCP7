@@ -13,7 +13,6 @@ let user,
         {
             featureType: 'poi',
             elementType: 'all',
-            //stylers: [{ color: '#d59563' }]
             stylers: [{ visibility: "off" }]
         },
         {
@@ -63,36 +62,36 @@ function centerMap(location) {
     map = new google.maps.Map(
         document.getElementById('map'), { zoom: 15, center: user, styles: mapStyle });
     var userMarker = new google.maps.Marker({ position: user, animation: google.maps.Animation.DROP, map: map, title: "Vous êtes là", icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png" });
-    
+
     map.addListener('click', function (mapsMouseEvent) {
         let latlng = mapsMouseEvent.latLng.toString()
+        console.log(mapsMouseEvent.latLng.toString())
         latlng = latlng.replace('(', '')
         latlng = latlng.replace(')', '')
         latlng = latlng.split(', ')
         console.log(latlng)
         console.log($.querySelector('#editor').checked)
-            if ($.querySelector('#editor').checked) {
-                let name = prompt("Quel est le nom du restaurant")
-                //fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=47.46634361862981,-0.549963790178305&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`)
-                fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latlng[0]},${latlng[1]}&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`)
-                    .then((res) => {
-                        return res.json()
-                    })
-                    .then((data)=>{
-                        let obj = new Object
-                        obj.restaurantName = name
-                        id = restaurantCollection.length
-                        obj.address = data.results[0].formatted_address
-                        obj.lat = parseFloat(latlng[0])
-                        obj.long = parseFloat(latlng[1])
-                        obj.ratings = new Array
-                        restaurantCollection.push(new Restaurant(obj, id))
-                        let near = nearSort(restaurantCollection, 1)
-                        console.log(near)
-                        $.querySelectorAll('.restaurantCard').forEach(el => el.remove())
-                        near.forEach(el=>el.displayShortCard())
-                    })
-            }
+        if ($.querySelector('#editor').checked) {
+            let name = prompt("Quel est le nom du restaurant")
+            fetch(`https://maps.googleapis.com/maps/api/geocode/json?latlng=${latlng[0]},${latlng[1]}&key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI`)
+                .then((res) => {
+                    return res.json()
+                })
+                .then((data) => {
+                    let obj = new Object
+                    obj.restaurantName = name
+                    id = restaurantCollection.length
+                    obj.address = data.results[0].formatted_address
+                    obj.lat = parseFloat(latlng[0])
+                    obj.long = parseFloat(latlng[1])
+                    obj.ratings = new Array
+                    restaurantCollection.push(new Restaurant(obj, id))
+                    let near = nearSort(restaurantCollection, 1)
+                    console.log(near)
+                    $.querySelectorAll('.restaurantCard').forEach(el => el.remove())
+                    near.forEach(el => el.displayShortCard())
+                })
+        }
     });
     fetchNear()
 }
@@ -106,31 +105,46 @@ function noLocation() {
 }
 
 function fetchNear() {
-    // fetch('../api/places.json')
-    //     .then(res => res.json())
-    //     .then(json => {
-    //         console.log(json)
-    //         let near = nearSort(json)
-    //         return near
-    //     }).then(places => {
-    //         console.log(places)
-    //         for (let i = 0; i < places.length; i++) {
-    //             const el = places[i];
-    //             restaurantCollection.push(new Restaurant(el, i))
-    //         }
-    //     })
-    var request = {
-        location: {lat : user.lat, lng : user.lng},
-        radius: '500',
-        type: ['restaurant'],
-      };
-    
-      service = new google.maps.places.PlacesService(map);
-      service.nearbySearch(request, (res) => {
+
+    let request = {
+        location: { lat: user.lat, lng: user.lng },
+        radius: 1000,
+        type: ['restaurant']
+    };
+
+    window.service = new google.maps.places.PlacesService(map);
+    service.nearbySearch(request, (res) => {
+        let near = new Array
         console.log(res)
-        console.log(res.rating)
-        console.log(res.reviews)
-      });
+        res[1].geometry.location.lat.toString()
+        console.log(res[1].reviews)
+        res.forEach(el => {
+            let obj = new Object
+            console.log(el)
+            obj.restaurantName = el.name
+            obj.address = el.vicinity
+            let latLng = el.geometry.location.toString()
+            latLng = latLng.replace('(', '')
+            latLng = latLng.replace(')', '')
+            latLng = latLng.split(', ')
+            obj.lat = parseFloat(latLng[0])
+            obj.lng = parseFloat(latLng[1])
+            obj.rate = el.rating
+            obj.nbRate = el.user_ratings_total
+            obj.placeId = el.place_id
+            obj.ratings = new Array
+            console.log(obj)
+            near.push(obj)
+        });
+        near = nearSort(near)
+        console.log(near)
+        for (let i = 0; i < near.length; i++) {
+            const el = near[i];
+            if (el.rate !== undefined) {
+                restaurantCollection.push(new Restaurant(el, i))
+            }
+        }
+    });
 }
 
 function eventHandler(e) {
@@ -178,14 +192,15 @@ function distance(lat1, lon1, lat2, lon2, unit) {
     }
 }
 
-function nearSort(data, type = 0){
+function nearSort(data) {
     let array = []
     data.forEach(el => {
-        let diff = distance(user.lat, user.lng, el.lat, type ? el.lng : el.long, "K")
+        let diff = distance(user.lat, user.lng, el.lat, el.lng, "K")
         if (diff < 10) {
             el.diff = diff
             array.push(el)
         }
+
     })
     array.sort(function (a, b) {
         let keyA = a.diff,
@@ -196,22 +211,3 @@ function nearSort(data, type = 0){
     })
     return array
 }
-
-//close overlay
-
-// function eventFire(el, etype) {
-//     if (el.fireEvent) {
-//         el.fireEvent('on' + etype);
-//     } else {
-//         var evObj = document.createEvent('Events');
-//         evObj.initEvent(etype, true, false);
-//         el.dispatchEvent(evObj);
-//     }
-// }
-// setTimeout(() => {
-//     eventFire(document.querySelector('.dismissButton'), 'click')
-// }, 4000)
-
-// function testEvent(e) {
-//     console.log(e)
-// }
