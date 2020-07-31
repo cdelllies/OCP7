@@ -106,19 +106,31 @@ function noLocation() {
 }
 
 function fetchNear() {
-    fetch('../api/places.json')
-        .then(res => res.json())
-        .then(json => {
-            console.log(json)
-            let near = nearSort(json)
-            return near
-        }).then(places => {
-            console.log(places)
-            for (let i = 0; i < places.length; i++) {
-                const el = places[i];
-                restaurantCollection.push(new Restaurant(el, i))
-            }
-        })
+    // fetch('../api/places.json')
+    //     .then(res => res.json())
+    //     .then(json => {
+    //         console.log(json)
+    //         let near = nearSort(json)
+    //         return near
+    //     }).then(places => {
+    //         console.log(places)
+    //         for (let i = 0; i < places.length; i++) {
+    //             const el = places[i];
+    //             restaurantCollection.push(new Restaurant(el, i))
+    //         }
+    //     })
+    var request = {
+        location: {lat : user.lat, lng : user.lng},
+        radius: '500',
+        type: ['restaurant'],
+      };
+    
+      service = new google.maps.places.PlacesService(map);
+      service.nearbySearch(request, (res) => {
+        console.log(res)
+        console.log(res.rating)
+        console.log(res.reviews)
+      });
 }
 
 function eventHandler(e) {
