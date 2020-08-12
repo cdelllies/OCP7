@@ -13,12 +13,15 @@ class Restaurant {
         this.desc = this.displayShortCard()
         this.marker = new google.maps.Marker({ position: { lat: this.lat, lng: this.lng }, animation: google.maps.Animation.DROP, map: map, title: this.restaurantName, icon: "https://maps.google.com/mapfiles/ms/icons/yellow-dot.png", url: `#${this.id}` });
         this.addMarkerListener()
+        this.roundRate(this.rate)
     }
+
     addMarkerListener() {
         google.maps.event.addListener(this.marker, 'click', function () {
             window.location.href = this.url;
         });
     }
+
     displayShortCard() {
         let titleBar = $.createElement("span"),
             div = $.createElement("div"),
@@ -30,7 +33,8 @@ class Restaurant {
         titleBar.classList.add("d-flex", "justify-content-between")
         titleBar.append(title)
 
-        average.innerHTML = this.rate + '&nbsp' + starSvg
+        average.classList.add('rating')
+        average.innerHTML = this.roundRate(this.rate)
 
         titleBar.append(average)
 
@@ -54,7 +58,11 @@ class Restaurant {
 
         a.append(img)
         this.desc.append(a)
-        this.desc.append(document.createElement('h5').innerHTML = `Avis (${this.nbRate})`)
+        this.desc.append($.createElement('h5').innerHTML = `Avis (${this.nbRate})`)
+        this.desc.append($.createElement('br'))
+        addRateBtn.innerText = 'Ajouter un avis'
+        addRateBtn.classList.add('btn', 'btn-info')
+        this.desc.append(addRateBtn)
 
         window.service.getDetails({ placeId: this.placeId, fields: ['review'] }, (res) => {
             console.log(res)
@@ -75,7 +83,8 @@ class Restaurant {
                     rateCard.append(comment)
 
                     let stars = $.createElement('span')
-                    stars.innerHTML = rating.stars + '&nbsp' + starSvg
+                    stars.classList.add('rating')
+                    stars.innerHTML = this.roundRate(rating.stars)
                     stars.classList.add('col-2', 'text-right')
                     rateCard.append(stars)
 
@@ -83,8 +92,6 @@ class Restaurant {
                 });
             }
 
-            addRateBtn.innerText = 'Ajouter un avis'
-            this.desc.append(addRateBtn)
             this.descRendered = true
         })
 
@@ -113,8 +120,10 @@ class Restaurant {
             average = $.createElement('div'),
             comment = prompt('Quel est votre commentaire ?'),
             rate
+        if (comment == null) { return }
         while (!_.isNumber(rate) || isNaN(rate) || rate < 1 || rate > 5) {
             rate = prompt('Quelle est votre note ?')
+            if (rate == null) { return }
             rate = parseInt(rate)
             console.log(typeof (rate))
         }
@@ -130,5 +139,25 @@ class Restaurant {
 
         this.toggleDesc(el)
         this.toggleDesc(el)
+    }
+    roundRate(rate) {
+        let double = Math.round(rate * 2),
+            stars = 0,
+            halfStar = 0,
+            str = ""
+        if (double % 2) {
+            stars = Math.floor(double / 2)
+            halfStar = 1
+        } else {
+            stars = double / 2
+        }
+        for (let i = 0; i < stars; i++) {
+            str += '●'
+        }
+        halfStar ? str += '◐' : 0
+        while (str.length < 5) {
+            str += '○'
+        }
+        return str
     }
 }

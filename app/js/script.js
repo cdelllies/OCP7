@@ -97,6 +97,7 @@ function centerMap(location) {
 }
 
 function noLocation() {
+    alert("Votre localisation est désactivée, l'application sera centrée sur Angers par défaut")
     let location = {}
     location.coords = {}
     location.coords.latitude = 47.46667
