@@ -4,15 +4,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OCP7</title>
-    <script>
-        let current = window.location
-        window.location = `./app`
-    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Rubik&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/style.css">
+    <title>HexaFood</title>
 </head>
 
-<body>
+<body style="height: 100vh;">
+    <nav class="navbar navbar-light bg-light" style="height: 4rem;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-egg-fried" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                        d="M13.665 6.113a1 1 0 0 1-.667-.977L13 5a4 4 0 0 0-6.483-3.136 1 1 0 0 1-.8.2 4 4 0 0 0-3.693 6.61 1 1 0 0 1 .2 1 4 4 0 0 0 6.67 4.087 1 1 0 0 1 1.262-.152 2.5 2.5 0 0 0 3.715-2.905 1 1 0 0 1 .341-1.113 2.001 2.001 0 0 0-.547-3.478zM14 5c0 .057 0 .113-.003.17a3.001 3.001 0 0 1 .822 5.216 3.5 3.5 0 0 1-5.201 4.065 5 5 0 0 1-8.336-5.109A5 5 0 0 1 5.896 1.08 5 5 0 0 1 14 5z" />
+                    <circle cx="8" cy="8" r="3" />
+                </svg>
+                &nbsp; HexaFood
+            </a>
+            <span>
+                <label for="editor">Mode éditeur</label>
+                <input type="checkbox" name="editor" id="editor">
+            </span>
+        </div>
+    </nav>
+    <div class="container-fluid" style="height: calc(100% - 4.25rem);">
+        <div class=" row" style="height: 100%;">
+            <div class="col-sm-4 bg-primary" id="cardContainer">
+                <div class="container-fluid bg-warning filter">
+                    <span id="value">Note minimale : 1</span>
+                    <input id="range" type="range" min="1" max="5" value="1" onchange="sliderChange(this.value)" />
+                </div>
+            </div>
+            <div class="col-sm-8" id="map">
 
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.19/lodash.min.js"></script>
+    <script src="js/Restaurant.js"></script>
+    <script src="js/script.js"></script>
+    <script async defer
+        src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCPL0ytHoiwfncMjqnKtANnbi0ukEDxBFI&libraries=places&callback=initMap">
+        </script>
 </body>
 
 </html>
