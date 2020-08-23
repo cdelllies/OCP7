@@ -9,6 +9,7 @@
 }
 body {
     font-family:sans-serif;
+    height: 100vh;
 }
 .rating {
     font-family:star-rating;
@@ -55,12 +56,23 @@ body {
     cursor: pointer;
 }
 @media (max-width: 575px) {
+        body{
+            font-size: 14px;
+        }
         #cardContainer{
             padding: 0;
             height: calc(50vh - 4rem);
             overflow-y: scroll;
+            overflow-x: hidden;
         }
-        .map{
-            height: 50vh;
+        #map{
+            height: 50vh
+        }
+  }
+@media (min-width: 575px) {
+        #cardContainer{
+            padding: 0;
+            height: calc(100vh - 4rem);
+            overflow-y: scroll;
         }
   }
